@@ -9,8 +9,11 @@
  * Author    : Vignesh
  * 
  */
+
  
-class Github {
+require 'base_github.php';
+
+class Github extends base_github{
 	
 	//Client ID provided by github
 	protected $app_id;
@@ -32,10 +35,38 @@ class Github {
 	
 	
 	/*
-	 * 
+	 * constructor - checks if any of the data members r available and aims at obtaining an access token
 	 * */
 	function __construct($config) {
 		$this->getSession();
+		
+		//Sets scope for the access token
+		if(isset($config['SCOPE'])){
+			$this->scope = $config['SCOPE'];
+		} else {
+			$this->scope = "repo";
+		}
+		
+		//Sets app id and app secret
+		$this->app_id = $config['APP_ID'];
+		$this->app_secret = $config['APP_SECRET'];
+		
+		//if code is set - check for state and obtain accesstoken and store it in session.
+		//if not set obtain it from session
+		if(isset($_GET['code'])){
+			if($_SESSION['GIT_STATE'] == $_GET['state']){
+				$this->code = $_GET['code'];
+				$this->fetchAccessToken();
+				$this->fetchUser();
+			} else {
+				echo "CSRF activity";
+			}
+		} else {
+			if(isset($_SESSION['GIT_ACCESS_TOKEN']))
+			$this->access_token = $_SESSION['GIT_ACCESS_TOKEN'];
+			$this->fetchUser();
+		}
+		
 	}
 	
 	/*
@@ -48,24 +79,48 @@ class Github {
 	}
 	
 	/*
-	 * Fetches accesstoken from code
+	 * Sets user as soon as an access token is obtained
+	 * */
+	 protected function fetchUser(){
+		$out = $this->api('/user', 'GET', array('access_token'=>$this->access_token));
+		$out = json_decode($out);
+		$this->user = $this->objectToArray($out);
+	 }
+	 
+	/*
+	 * Fetches access token from code
 	 * */
 	protected function fetchAccessToken(){
-		
+		$url = "https://github.com/login/oauth/access_token?client_id=".$this->app_id."&client_secret=".$this->app_secret."&code=".$this->code;
+		$result = curl($url, "POST");
+		parse_str($result,$result1);
+		$this->access_token = $result1['access_token'];
+		$_SESSION['GIT_ACCESS_TOKEN'] = $this->access_token;
 	}
 	
 	/*
 	 * 
 	 * */
 	public function getUser(){
-		
+		return $this->user;
 	}
 	
 	/*
 	 * Call to api
 	 * */
 	public function api($path, $method, $params){
-		
+		$url = "https://api.github.com".$path;
+		if(is_array($params)){
+			$i = 0;
+			foreach ($params as $key => $value) {
+				if(!$i){
+					$url = $url."?_a=1";
+					$i++;
+				}
+				$url = $url."&".$key."=".$value;
+			}
+		}
+		return curl($url, $method);
 	}
 	
 	/*
