@@ -11,7 +11,7 @@
  */
 
  
-require 'base_github.php';
+require __DIR__.'/base_github.php';
 
 class Github extends base_github{
 	
@@ -92,7 +92,7 @@ class Github extends base_github{
 	 * */
 	protected function fetchAccessToken(){
 		$url = "https://github.com/login/oauth/access_token?client_id=".$this->app_id."&client_secret=".$this->app_secret."&code=".$this->code;
-		$result = curl($url, "POST");
+		$result = $this->curl($url, "POST");
 		parse_str($result,$result1);
 		$this->access_token = $result1['access_token'];
 		$_SESSION['GIT_ACCESS_TOKEN'] = $this->access_token;
@@ -120,7 +120,7 @@ class Github extends base_github{
 				$url = $url."&".$key."=".$value;
 			}
 		}
-		return curl($url, $method);
+		return $this->curl($url, $method);
 	}
 	
 	/*

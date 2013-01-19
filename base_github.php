@@ -40,7 +40,7 @@ class base_github {
 		}
 	 
 		if (is_array($data)) {
-			return array_map(__FUNCTION__, $data);
+			return array_map(array($this, __FUNCTION__) , $data);
 		}
 		else {
 			return $data;
