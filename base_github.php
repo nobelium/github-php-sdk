@@ -10,6 +10,14 @@
  * 
  */
 
+
+if (!function_exists('curl_init')) {
+  throw new Exception('Github needs the CURL PHP extension.');
+}
+if (!function_exists('json_decode')) {
+  throw new Exception('Github needs the JSON PHP extension.');
+}
+
 class base_github {
 	
 	/*
@@ -40,7 +48,7 @@ class base_github {
 		}
 	 
 		if (is_array($data)) {
-			return array_map(__FUNCTION__, $data);
+			return array_map(array($this, __FUNCTION__) , $data);
 		}
 		else {
 			return $data;
