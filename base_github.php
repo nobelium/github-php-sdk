@@ -23,12 +23,14 @@ class base_github {
 	/*
 	 * curls the given url
 	 * */
-	protected function curl($url, $method){
+	protected function curl($url, $method, $postdata=NULL ){
 		$ch = curl_init();
 	
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		if($method == "POST" && $postdata!=Null)
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
 		$output = curl_exec($ch);
 		curl_close($ch);
 		

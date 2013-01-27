@@ -54,7 +54,7 @@ class Github extends base_github{
 		}
 		
 		if(isset($config['REDIRECT_URI'])){
-			$this->redirect_uri = $config['REDIRECT_URi']; 
+			$this->redirect_uri = $config['REDIRECT_URI']; 
 		} else {
 			$here = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 			$next = preg_replace('~#.*$~s', '', $here);
@@ -69,13 +69,15 @@ class Github extends base_github{
 		
 		//if code is set - check for state and obtain accesstoken and store it in session.
 		//if not set obtain it from session
-		if(isset($_GET['code']) && isset($_GET['state'])){
-			if($_SESSION[$this->app_id."GITHUB_STATE"] == $_GET['state']){
-				$this->code = $_GET['code'];
-				$this->fetchAccessToken();
-				header("Location: ".$this->redirect_uri);
-			} else {
-				echo "Github sdk is detecting CSRF activity";
+		if(isset($_GET['code'])){
+			if(isset($_SESSION[$this->app_id.'GITHUB_STATE']) && !empty($_SESSION[$this->app_id.'GITHUB_STATE'])){
+				if($_SESSION[$this->app_id.'GITHUB_STATE'] == $_GET['state']){
+					$this->code = $_GET['code'];
+					$this->fetchAccessToken();
+					$this->fetchUser();
+				} else {
+					echo "CSRF activity";
+				}
 			}
 		} else {
 			if(isset($_SESSION[$this->app_id.'GIT_ACCESS_TOKEN']))
@@ -107,6 +109,7 @@ class Github extends base_github{
 	 * Fetches access token from code
 	 * */
 	protected function fetchAccessToken(){
+
 		$url = "https://github.com/login/oauth/access_token?client_id=".$this->app_id."&redirect_uri=".$this->redirect_uri."&client_secret=".$this->app_secret."&code=".$this->code."&state=".$_SESSION[$this->app_id."GITHUB_STATE"];
 		$result = $this->curl($url, "POST");
 		parse_str($result,$result1);
@@ -124,7 +127,7 @@ class Github extends base_github{
 	/*
 	 * Call to api
 	 * */
-	public function api($path, $method, $params){
+	public function api($path, $method, $params, $postdata=NULL ){
 		$url = "https://api.github.com".$path;
 		if(is_array($params)){
 			$i = 0;
@@ -136,6 +139,7 @@ class Github extends base_github{
 				$url = $url."&".$key."=".$value;
 			}
 		}
+		if($method == "POST")return $this->curl($url, $method, $postdata);
 		return $this->curl($url, $method);
 	}
 	
