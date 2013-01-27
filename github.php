@@ -74,9 +74,10 @@ class Github extends base_github{
 				if($_SESSION[$this->app_id.'GITHUB_STATE'] == $_GET['state']){
 					$this->code = $_GET['code'];
 					$this->fetchAccessToken();
-					$this->fetchUser();
+					unset($_SESSION[$this->app_id.'GITHUB_STATE']);
+					header("Location: ".$this->redirect_uri);
 				} else {
-					echo "CSRF activity";
+					error_log("CSRF activity");
 				}
 			}
 		} else {
@@ -109,7 +110,6 @@ class Github extends base_github{
 	 * Fetches access token from code
 	 * */
 	protected function fetchAccessToken(){
-
 		$url = "https://github.com/login/oauth/access_token?client_id=".$this->app_id."&redirect_uri=".$this->redirect_uri."&client_secret=".$this->app_secret."&code=".$this->code."&state=".$_SESSION[$this->app_id."GITHUB_STATE"];
 		$result = $this->curl($url, "POST");
 		parse_str($result,$result1);
