@@ -74,8 +74,8 @@ class Github extends base_github{
 				if($_SESSION[$this->app_id.'GITHUB_STATE'] == $_GET['state']){
 					$this->code = $_GET['code'];
 					$this->fetchAccessToken();
-					unset($_SESSION[$this->app_id.'GITHUB_STATE']);
-					header("Location: ".$this->redirect_uri);
+					//unset($_SESSION[$this->app_id.'GITHUB_STATE']);
+					//header("Location: ".$this->redirect_uri);
 				} else {
 					error_log("CSRF activity");
 				}
