@@ -38,7 +38,10 @@ class Github extends base_github{
 	
 	//the uri to which the user has to be redirected after authorization
 	protected $redirect_uri;
-
+	
+	//redirect to the url after authentication
+	protected $redirect_to;
+	
 	/*
 	 * constructor - checks if any of the data members r available and aims at obtaining an access token
 	 * */
@@ -54,14 +57,14 @@ class Github extends base_github{
 		}
 		
 		if(isset($config['REDIRECT_URI'])){
-			$this->redirect_uri = $config['REDIRECT_URI']; 
-		} else {
-			$here = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-			$next = preg_replace('~#.*$~s', '', $here);
-			$next = preg_replace('~\?.*$~s', '', $next);
-			$next = preg_replace('~/[^/]*$~s', '', $next);
-			$this->redirect_uri = $next;
+			$this->redirect_to = $config['REDIRECT_URI']; 
 		}
+		
+		$here = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+		$next = preg_replace('~#.*$~s', '', $here);
+		$next = preg_replace('~\?.*$~s', '', $next);
+		$next = preg_replace('~/[^/]*$~s', '', $next);
+		$this->redirect_uri = $next;
 		
 		//Sets app id and app secret
 		$this->app_id = $config['APP_ID'];
@@ -74,18 +77,18 @@ class Github extends base_github{
 				if($_SESSION[$this->app_id.'GITHUB_STATE'] == $_GET['state']){
 					$this->code = $_GET['code'];
 					$this->fetchAccessToken();
-					//unset($_SESSION[$this->app_id.'GITHUB_STATE']);
-					//header("Location: ".$this->redirect_uri);
+					unset($_SESSION[$this->app_id.'GITHUB_STATE']);
+					header("Location: ".$this->redirect_to);
 				} else {
 					error_log("CSRF activity");
 				}
 			}
 		} else {
-			if(isset($_SESSION[$this->app_id.'GIT_ACCESS_TOKEN']))
-			$this->access_token = $_SESSION[$this->app_id.'GIT_ACCESS_TOKEN'];
-			$this->fetchUser();
+			if(isset($_SESSION[$this->app_id.'GIT_ACCESS_TOKEN'])){
+				$this->access_token = $_SESSION[$this->app_id.'GIT_ACCESS_TOKEN'];
+				$this->fetchUser();
+			}
 		}
-		
 	}
 	
 	/*
@@ -147,8 +150,8 @@ class Github extends base_github{
 	 * Returns the url for authenticating the user
 	 * */
 	public function getLoginUrl(){
-		$_SESSION[$this->app_id."GITHUB_STATE"] = md5(uniqid(rand(), true));
-		return "https://github.com/login/oauth/authorize?client_id=".$this->app_id."&redirect_uri=".$this->redirect_uri."&scope=".$this->scope."&state=".$_SESSION[$this->app_id."GITHUB_STATE"];
+		if(!isset($_SESSION[$this->app_id.'GITHUB_STATE']))$_SESSION[$this->app_id.'GITHUB_STATE'] = md5(uniqid(rand(), true));
+		return "https://github.com/login/oauth/authorize?client_id=".$this->app_id."&redirect_uri=".$this->redirect_uri."&scope=".$this->scope."&state=".$_SESSION[$this->app_id.'GITHUB_STATE'];
 	}
 	
 	public function getLogoutUrl(){
@@ -179,6 +182,8 @@ class Github extends base_github{
 	 
 	public function setAccessToken($token){
 		$this->access_token = $token;
+		$this->fetchUser();
+		$_SESSION[$this->app_id.'GIT_ACCESS_TOKEN'] = $this->access_token;
 	}
 	
 	public function setAppId($appid){
