@@ -34,7 +34,9 @@ Use the api method to make api calls
 ###Useful Stuff###
 You can directly set the access token using setAccessToken method
 
-```$github->setAccessToken(<access_token>);```
+```
+$github->setAccessToken(<access_token>);
+```
 
 app secret/app id can be changed after creation using 'setAppSecret' and 'setAppId'
 
