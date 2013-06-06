@@ -36,8 +36,7 @@ You can directly set the access token using setAccessToken method
 
 ```$github->setAccessToken(<access_token>);```
 
-app secret/app id can be changed after creation using
-'setAppSecret' and 'setAppId'
+app secret/app id can be changed after creation using 'setAppSecret' and 'setAppId'
 
 Get methods of the above are also available
 
